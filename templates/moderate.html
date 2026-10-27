@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Community Moderation Queue — TrustGuard AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <div class="dash-title-group">
+            <div class="hero-badge" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-user-shield"></i> Administration & Safety Review
+            </div>
+            <h1 class="dash-title">Community Moderation Queue</h1>
+            <p class="dash-subtitle">
+                Review submitted scam reports before approving them for public educational listing. Ensure submissions adhere to community safety guidelines and contain no personal defamatory attacks.
+            </p>
+        </div>
+        <div class="dash-actions">
+            <a href="{{ url_for('community_reports_page') }}" class="btn btn-outline">
+                <i class="fa-solid fa-arrow-left"></i> Back to Community Feed
+            </a>
+        </div>
+    </div>
+
+    <!-- Moderation Guidelines -->
+    <div class="alert alert-info" style="margin-bottom: 24px;">
+        <i class="fa-solid fa-clipboard-check"></i>
+        <span>
+            <strong>Moderation Checklist:</strong>
+            1. Ensure evidence is a digital communication (phishing message, URL, job solicitation).
+            2. Verify the description explains suspicious traits neutrally.
+            3. Reject reports that accuse named private individuals of crimes or contain profanity.
+        </span>
+    </div>
+
+    <div class="card table-card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-inbox"></i> Pending Submissions ({{ reports|length }})</h3>
+            <span class="badge badge-suspicious">Pending Review</span>
+        </div>
+
+        {% if reports %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Category</th>
+                            <th>Reporter</th>
+                            <th>Evidence Preview</th>
+                            <th>Observation Description</th>
+                            <th>Date</th>
+                            <th style="min-width: 160px;">Moderation Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                            <tr id="modRow-{{ r.id }}">
+                                <td class="text-muted">#{{ r.id }}</td>
+                                <td>
+                                    <span class="badge badge-type">{{ r.category }}</span>
+                                    <br><small class="text-muted">{{ r.scam_type }}</small>
+                                </td>
+                                <td>
+                                    {% if r.reporter_username %}
+                                        <span class="badge badge-outline"><i class="fa-solid fa-user"></i> {{ r.reporter_username }}</span>
+                                    {% else %}
+                                        <span class="text-muted text-xs"><i class="fa-solid fa-user-ninja"></i> Guest</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="snippet-cell" title="{{ r.evidence_snippet }}" style="max-width: 250px;">
+                                        {{ r.evidence_snippet }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="snippet-cell" title="{{ r.description }}" style="max-width: 250px;">
+                                        {{ r.description }}
+                                    </div>
+                                </td>
+                                <td class="text-muted text-xs">
+                                    {{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at.strftime else r.created_at }}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 6px;">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary btn-xs mod-btn"
+                                            data-id="{{ r.id }}"
+                                            data-action="approved"
+                                            title="Approve report for public feed"
+                                        >
+                                            <i class="fa-solid fa-check"></i> Approve
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline btn-xs mod-btn"
+                                            data-id="{{ r.id }}"
+                                            data-action="rejected"
+                                            title="Reject and discard report"
+                                            style="color: #dc2626; border-color: #fca5a5;"
+                                        >
+                                            <i class="fa-solid fa-xmark"></i> Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fa-solid fa-circle-check" style="color: #059669;"></i>
+                </div>
+                <h4>Moderation Queue is Clean</h4>
+                <p>There are no pending community scam reports requiring review at this time.</p>
+                <a href="{{ url_for('community_reports_page') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-users"></i> View Public Community Reports
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".mod-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const reportId = btn.dataset.id;
+            const newStatus = btn.dataset.action;
+            if (!confirm(`Are you sure you want to mark Report #${reportId} as ${newStatus}?`)) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/community/reports/${reportId}/status`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    alert(data.error || "Failed to update status.");
+                    btn.disabled = false;
+                    return;
+                }
+
+                const row = document.getElementById(`modRow-${reportId}`);
+                if (row) {
+                    row.style.transition = "opacity 0.4s ease";
+                    row.style.opacity = "0.3";
+                    setTimeout(() => row.remove(), 400);
+                }
+            } catch (err) {
+                alert("An error occurred during moderation action.");
+                btn.disabled = false;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

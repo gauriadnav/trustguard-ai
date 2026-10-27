@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard & Scan History — TrustGuard AI{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="dash-title-group">
+            <h1 class="dash-title">Security Dashboard & History</h1>
+            <p class="dash-subtitle">
+                Overview of personal scan history, threat distribution, and aggregated security statistics.
+            </p>
+        </div>
+        <div class="dash-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> New Scan
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary KPI Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+            </div>
+            <div class="stat-data">
+                <span class="stat-value">{{ stats.total_scans }}</span>
+                <span class="stat-label">Total Scans Run</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="stat-data">
+                <span class="stat-value">{{ stats.high_risk_count }}</span>
+                <span class="stat-label">High Risk Flagged</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-amber">
+                <i class="fa-solid fa-shield-virus"></i>
+            </div>
+            <div class="stat-data">
+                <span class="stat-value">{{ stats.suspicious_count }}</span>
+                <span class="stat-label">Suspicious Detections</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-green">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="stat-data">
+                <span class="stat-value">{{ stats.low_risk_count }}</span>
+                <span class="stat-label">Low Risk Verified</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-purple">
+                <i class="fa-solid fa-gauge-high"></i>
+            </div>
+            <div class="stat-data">
+                <span class="stat-value">{{ stats.avg_score }}<small>/100</small></span>
+                <span class="stat-label">Average Risk Score</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Visualizations Row (Chart.js) -->
+    <div class="charts-row">
+        <!-- Chart 1: Risk Level Breakdown -->
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-chart-pie"></i> Risk Level Distribution</h3>
+                <span class="badge badge-outline">Categorical</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="riskDoughnutChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Modality Distribution -->
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-chart-simple"></i> Scans by Modality</h3>
+                <span class="badge badge-outline">Channels</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="modalityBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historical Scans Table -->
+    <div class="card table-card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Scan History</h3>
+            <span class="badge badge-outline">{{ scans|length }} Records</span>
+        </div>
+
+        {% if scans %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Input Snippet Preview</th>
+                            <th>Risk Score</th>
+                            <th>Risk Category</th>
+                            <th>Date / Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in scans %}
+                            <tr>
+                                <td class="text-muted">#{{ scan.id }}</td>
+                                <td>
+                                    <span class="badge badge-type">
+                                        {% if scan.scan_type == 'url' %}
+                                            <i class="fa-solid fa-link"></i> URL
+                                        {% elif scan.scan_type == 'email' %}
+                                            <i class="fa-solid fa-envelope"></i> Email
+                                        {% elif scan.scan_type == 'job_offer' %}
+                                            <i class="fa-solid fa-briefcase"></i> Job Offer
+                                        {% elif scan.scan_type == 'screenshot' %}
+                                            <i class="fa-solid fa-camera"></i> Screenshot
+                                        {% else %}
+                                            <i class="fa-solid fa-message"></i> Text
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="snippet-cell" title="{{ scan.input_snippet }}">
+                                        {{ scan.input_snippet }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="score-pill score-val-{{ scan.risk_level|replace(' ', '-')|lower }}">
+                                        {{ scan.risk_score }}/100
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if scan.risk_level == 'High Risk' %}
+                                        <span class="badge badge-high"><i class="fa-solid fa-triangle-exclamation"></i> High Risk</span>
+                                    {% elif scan.risk_level == 'Suspicious' %}
+                                        <span class="badge badge-suspicious"><i class="fa-solid fa-circle-exclamation"></i> Suspicious</span>
+                                    {% else %}
+                                        <span class="badge badge-low"><i class="fa-solid fa-circle-check"></i> Low Risk</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted text-sm">
+                                    {{ scan.created_at.strftime('%Y-%m-%d %H:%M') if scan.created_at.strftime else scan.created_at }}
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline btn-xs view-scan-btn"
+                                        data-scan-id="{{ scan.id }}"
+                                    >
+                                        <i class="fa-solid fa-eye"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fa-solid fa-shield-cat"></i>
+                </div>
+                <h4>No Scan History Yet</h4>
+                <p>You have not executed any scans under this account. Run your first analysis to populate your dashboard.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-shield-halved"></i> Start Your First Scan
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal for Viewing Stored Scan Details -->
+<div id="scanDetailModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"><i class="fa-solid fa-shield-halved"></i> Scan Analysis Report</h3>
+                <button type="button" class="modal-close" id="modalCloseBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="loading-spinner-center">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading record...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="modalDismissBtn">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

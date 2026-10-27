@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TrustGuard AI — An Intelligent Digital Trust and Scam Detection Platform for assessing suspicious messages, emails, URLs, and offers.">
+    <title>{% block title %}TrustGuard AI — Intelligent Scam & Digital Trust Detection{% endblock %}</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+
+    <!-- TrustGuard Theme Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar-header">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <div class="brand-shield">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">TrustGuard <span class="brand-ai">AI</span></span>
+                    <span class="brand-subtitle">Digital Trust & Scam Shield</span>
+                </div>
+            </a>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="fa-solid fa-radar"></i> Scanner
+                </a>
+
+                <a href="{{ url_for('community_reports_page') }}" class="nav-link {% if request.path == '/community' %}active{% endif %}">
+                    <i class="fa-solid fa-users-viewfinder"></i> Community Reports
+                </a>
+
+                {% if current_user %}
+                    <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    </a>
+                {% endif %}
+
+                {% if current_user and current_user.is_admin %}
+                    <a href="{{ url_for('community_moderate_page') }}" class="nav-link {% if request.path == '/community/moderate' %}active{% endif %}">
+                        <i class="fa-solid fa-user-shield"></i> Moderation
+                    </a>
+                {% endif %}
+            </nav>
+
+            <div class="nav-auth">
+                {% if current_user %}
+                    <div class="user-badge">
+                        <i class="fa-regular fa-user-circle"></i>
+                        <span class="username-label">{{ current_user.username }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-user-plus"></i> Register
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Notifications -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <div class="alert-icon">
+                            {% if category == 'success' %}
+                                <i class="fa-solid fa-circle-check"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-info"></i>
+                            {% endif %}
+                        </div>
+                        <div class="alert-message">{{ message }}</div>
+                        <button type="button" class="alert-close" onclick="this.parentElement.remove();">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        {% if custom_content %}
+            {{ custom_content | safe }}
+        {% else %}
+            {% block content %}{% endblock %}
+        {% endif %}
+    </main>
+
+    <!-- Mandatory Responsibility & Uncertainty Disclaimer Card -->
+    <section class="disclaimer-section">
+        <div class="disclaimer-card">
+            <div class="disclaimer-header">
+                <i class="fa-solid fa-shield-virus"></i>
+                <h4>Ethical AI & Probabilistic Uncertainty Notice</h4>
+            </div>
+            <p>
+                <strong>TrustGuard AI</strong> provides automated probabilistic risk assessments based on pattern recognition,
+                natural language processing (TF-IDF), and rule-based heuristic indicators.
+                <strong>Predictions do not constitute a legal, financial, or cybersecurity guarantee of safety or confirmation of fraud.</strong>
+                Always verify sensitive requests through verified, independent channels before transferring funds, sharing credentials, or clicking links.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <div class="footer-brand">
+                    <i class="fa-solid fa-shield-halved"></i> TrustGuard AI
+                </div>
+                <p>Final-Year B.Sc. Computer Science Project — Intelligent Scam & Phishing Detection Platform.</p>
+            </div>
+            <div class="footer-right">
+                <div class="footer-tag">
+                    <i class="fa-solid fa-code"></i> Python Flask &bull; MySQL &bull; scikit-learn &bull; Chart.js
+                </div>
+                <div class="footer-copy">&copy; 2026 TrustGuard AI. All rights reserved.</div>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

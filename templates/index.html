@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}TrustGuard AI — Digital Trust & Scam Scanner{% endblock %}
+
+{% block content %}
+<div class="container hero-container">
+    <div class="hero-content text-center">
+        <div class="hero-badge">
+            <i class="fa-solid fa-microchip"></i> Multi-Signal Threat Intelligence
+        </div>
+        <h1 class="hero-title">Evaluate Digital Trust in <span class="gradient-text">Real Time</span></h1>
+        <p class="hero-description">
+            TrustGuard AI inspects suspicious messages, emails, URLs, and recruitment offers
+            using a hybrid machine-learning and heuristic pattern engine.
+        </p>
+
+        <div class="trust-pills">
+            <span class="pill"><i class="fa-solid fa-brain"></i> TF-IDF Language Model</span>
+            <span class="pill"><i class="fa-solid fa-bolt"></i> Heuristic Urgency Rules</span>
+            <span class="pill"><i class="fa-solid fa-link"></i> Local URL Forensics</span>
+            <span class="pill"><i class="fa-solid fa-lock"></i> Strict Privacy Preservation</span>
+        </div>
+    </div>
+
+    <!-- Main Scanner Interface -->
+    <div class="scanner-wrapper">
+        <div class="card scanner-card">
+            <!-- Modality Tabs -->
+            <div class="scanner-tabs" id="scannerTabs">
+                <button type="button" class="tab-btn active" data-type="text">
+                    <i class="fa-solid fa-envelope-open-text"></i> Message / Email
+                </button>
+                <button type="button" class="tab-btn" data-type="url">
+                    <i class="fa-solid fa-link"></i> Suspicious URL
+                </button>
+                <button type="button" class="tab-btn" data-type="job_offer">
+                    <i class="fa-solid fa-briefcase"></i> Job / Internship Offer
+                </button>
+                <button type="button" class="tab-btn" data-type="screenshot">
+                    <i class="fa-solid fa-camera"></i> Screenshot Upload
+                </button>
+            </div>
+
+            <!-- Language Selection & Intelligence Bar -->
+            <div class="language-selector-bar">
+                <div class="lang-selector-group">
+                    <label for="languageSelect" class="lang-label">
+                        <i class="fa-solid fa-language"></i> Content Language:
+                    </label>
+                    <select id="languageSelect" name="language" class="lang-select">
+                        <option value="auto" selected>Auto-Detect Language</option>
+                        <option value="en">English (Tier 1: Full ML + Heuristics)</option>
+                        <option value="es">Spanish / Español (Tier 2: Heuristics + URLs)</option>
+                        <option value="fr">French / Français (Tier 2: Heuristics + URLs)</option>
+                        <option value="de">German / Deutsch (Tier 2: Heuristics + URLs)</option>
+                        <option value="other">Other / Unsupported (Tier 3: URL Forensics)</option>
+                    </select>
+                </div>
+                <div class="lang-tier-badge" id="langTierBadge">
+                    <span class="text-xs text-muted"><i class="fa-solid fa-circle-info"></i> Auto-routes to English ML or Multilingual Heuristics</span>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <form id="scanForm" class="scanner-form" onsubmit="return false;">
+                <input type="hidden" id="scanType" name="scan_type" value="text">
+
+                <!-- Text / URL / Job Offer Input Group -->
+                <div id="textInputGroup">
+                    <div class="form-group">
+                        <label for="scanInput" class="form-label" id="inputLabel">
+                            Paste suspicious communication or message text:
+                        </label>
+                        <textarea
+                            id="scanInput"
+                            name="content"
+                            class="form-control scanner-textarea"
+                            rows="5"
+                            placeholder="Paste email headers, text messages, or DM content here..."
+                        ></textarea>
+                    </div>
+
+                    <!-- One-Click Demo Sample Triggers (Great for Academic Presentation) -->
+                    <div class="demo-samples" id="demoSamples">
+                        <span class="demo-title"><i class="fa-regular fa-lightbulb"></i> Try quick test scenarios:</span>
+                        <button type="button" class="sample-btn" data-sample="phishing">
+                            Banking Phishing
+                        </button>
+                        <button type="button" class="sample-btn" data-sample="job_scam">
+                            Fake Internship Offer
+                        </button>
+                        <button type="button" class="sample-btn" data-sample="spoofed_url">
+                            Deceptive URL
+                        </button>
+                        <button type="button" class="sample-btn" data-sample="spanish_phishing">
+                            Spanish Phishing (Español)
+                        </button>
+                        <button type="button" class="sample-btn" data-sample="french_phishing">
+                            French Phishing (Français)
+                        </button>
+                        <button type="button" class="sample-btn" data-sample="safe_message">
+                            Legitimate Message
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Screenshot Upload Group (Active when Screenshot tab selected) -->
+                <div id="screenshotInputGroup" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Upload screenshot of suspicious message, email, or offer:
+                        </label>
+                        <div class="upload-dropzone" id="uploadDropzone">
+                            <input
+                                type="file"
+                                id="screenshotFile"
+                                name="screenshot"
+                                accept=".png,.jpg,.jpeg,.webp"
+                                class="file-input-hidden"
+                            >
+                            <div class="dropzone-content" id="dropzonePrompt">
+                                <div class="dropzone-icon">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <h4>Drag & Drop screenshot here, or <span class="browse-link">browse image</span></h4>
+                                <p class="text-xs text-muted">Supports PNG, JPG, JPEG, WEBP (Max 5MB)</p>
+                            </div>
+
+                            <!-- File Selected Preview Card -->
+                            <div class="file-preview-card" id="filePreviewCard" style="display: none;">
+                                <div class="preview-thumbnail-wrapper">
+                                    <img id="previewThumbnail" src="" alt="Screenshot preview" class="preview-thumbnail">
+                                </div>
+                                <div class="preview-meta">
+                                    <span class="preview-filename" id="previewFilename">screenshot.png</span>
+                                    <span class="preview-filesize text-muted text-xs" id="previewFilesize">0 KB</span>
+                                </div>
+                                <button type="button" class="btn btn-outline btn-xs" id="removeFileBtn" title="Remove image">
+                                    <i class="fa-solid fa-xmark"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ocr-info-banner">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>Text will be extracted using Tesseract OCR and evaluated for fraud patterns. Images are automatically deleted immediately after processing.</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="clearBtn" class="btn btn-secondary">
+                        <i class="fa-solid fa-rotate-left"></i> Clear
+                    </button>
+                    <button type="button" id="scanBtn" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-shield-halved"></i> Analyze Threat Risk
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading Spinner State -->
+            <div id="scanLoading" class="scan-loading" style="display: none;">
+                <div class="radar-spinner">
+                    <div class="radar-beam"></div>
+                    <i class="fa-solid fa-shield-halved radar-icon"></i>
+                </div>
+                <h4 class="loading-title">Analyzing Security Indicators...</h4>
+                <p class="loading-subtitle" id="loadingSubtitle">
+                    Running TF-IDF classifier inference, extracting heuristic urgency triggers,
+                    and inspecting structural URL patterns.
+                </p>
+            </div>
+
+            <!-- Error Feedback Box -->
+            <div id="scanError" class="scan-error-box" style="display: none;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <div class="error-text" id="scanErrorMsg">Error performing scan.</div>
+            </div>
+        </div>
+
+        <!-- Scan Result Card (Rendered Dynamically via JS) -->
+        <div id="resultCard" class="card result-card" style="display: none;">
+            <div class="result-header">
+                <div class="result-header-left">
+                    <span id="resBadgeType" class="badge badge-outline">Text Scan</span>
+                    <span class="result-timestamp" id="resTimestamp">Just now</span>
+                </div>
+                <div class="result-header-right">
+                    <span id="resAuthStatus" class="auth-pill"></span>
+                </div>
+            </div>
+
+            <!-- Multilingual Analysis Banner -->
+            <div id="resLanguageNotice" class="lang-result-banner" style="display: none;">
+                <div class="lang-banner-header">
+                    <span class="badge badge-type" id="resLangBadge"><i class="fa-solid fa-language"></i> English</span>
+                    <span class="lang-mode-tag" id="resLangMode">Full Hybrid Model</span>
+                </div>
+                <div class="lang-banner-note text-xs" id="resLangNote"></div>
+            </div>
+
+            <!-- Snippet Preview -->
+            <div class="snippet-box">
+                <span class="snippet-label">Analyzed Snippet:</span>
+                <p id="resSnippet" class="snippet-content"></p>
+            </div>
+
+            <!-- Extracted OCR Text Box (Visible for screenshot scans) -->
+            <div id="resOcrSection" class="ocr-section-box" style="display: none;">
+                <div class="ocr-section-header">
+                    <span class="ocr-badge"><i class="fa-solid fa-font"></i> Extracted OCR Text</span>
+                    <span class="text-xs text-muted" id="resOcrCharCount">0 characters</span>
+                </div>
+                <pre id="resOcrText" class="ocr-text-content"></pre>
+            </div>
+
+            <!-- Core Risk Meter & Level -->
+            <div class="risk-overview-grid">
+                <!-- Gauge Circle Card -->
+                <div class="score-card">
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                            <circle class="gauge-fill" id="gaugeCircle" cx="60" cy="60" r="50"></circle>
+                        </svg>
+                        <div class="gauge-text">
+                            <span class="gauge-number" id="resScore">0</span>
+                            <span class="gauge-max">/100</span>
+                        </div>
+                    </div>
+                    <div class="risk-badge-wrapper">
+                        <span id="resRiskBadge" class="badge badge-risk">Low Risk</span>
+                    </div>
+                </div>
+
+                <!-- Signal Metrics Breakdown -->
+                <div class="metrics-card">
+                    <h4 class="metrics-title"><i class="fa-solid fa-layer-group"></i> Risk Assessment Signals</h4>
+                    
+                    <div class="metric-row">
+                        <div class="metric-info">
+                            <span class="metric-label">Statistical Scam Likelihood (ML)</span>
+                            <span class="metric-val" id="resMlProb">0.0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="resMlBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-row">
+                        <div class="metric-info">
+                            <span class="metric-label">Classification Model Confidence</span>
+                            <span class="metric-val" id="resConfidence">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-confidence" id="resConfBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="assessment-verdict" id="resVerdictText">
+                        Evaluating content characteristics...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detected Characteristics & Indicators -->
+            <div class="section-container">
+                <h4 class="section-title">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Detected Warning Indicators
+                </h4>
+                <div id="resFlagsList" class="flags-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Defensive Recommendations -->
+            <div class="section-container">
+                <h4 class="section-title">
+                    <i class="fa-solid fa-shield-check"></i> Actionable Safety Guidance
+                </h4>
+                <ul id="resRecsList" class="recs-list">
+                    <!-- Populated dynamically via JS -->
+                </ul>
+            </div>
+
+            <!-- Per-Result Uncertainty Notice -->
+            <div class="result-disclaimer-box">
+                <i class="fa-solid fa-circle-info"></i>
+                <div class="disclaimer-text" id="resDisclaimer"></div>
+            </div>
+
+            <!-- Reset Actions -->
+            <div class="result-actions">
+                <button type="button" id="scanAnotherBtn" class="btn btn-outline">
+                    <i class="fa-solid fa-plus"></i> Scan Another Communication
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Architecture Feature Overview -->
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon icon-blue">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <h3>TF-IDF Language Analysis</h3>
+            <p>
+                Trained on verified communication security datasets using unigram and bigram term frequency weighting
+                to detect linguistic hallmarks of fraudulent solicitations.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon icon-amber">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <h3>Heuristic Threat Rules</h3>
+            <p>
+                Identifies high-urgency deadlines, credential/OTP demands, untraceable payment requests (crypto/gift cards),
+                and unrealistic employment compensation structures.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon icon-teal">
+                <i class="fa-solid fa-globe"></i>
+            </div>
+            <h3>Local URL Forensics</h3>
+            <p>
+                Performs deterministic syntactic checks for bare IP hostnames, high-risk disposable TLDs,
+                obfuscated userinfo (@), and brand impersonation in subdomains.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scan.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Community Scam Reports & Awareness — TrustGuard AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Community Page Header -->
+    <div class="dashboard-header">
+        <div class="dash-title-group">
+            <div class="hero-badge" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-users"></i> Collective Scam Defense
+            </div>
+            <h1 class="dash-title">Community Threat Intelligence</h1>
+            <p class="dash-subtitle">
+                Explore real scam patterns reported by community members to stay informed against emerging phishing, deceptive offers, and fraudulent solicitations.
+            </p>
+        </div>
+        <div class="dash-actions" style="display: flex; gap: 10px; align-items: center;">
+            {% if is_admin %}
+                <a href="{{ url_for('community_moderate_page') }}" class="btn btn-outline">
+                    <i class="fa-solid fa-user-shield"></i> Moderation Queue
+                </a>
+            {% endif %}
+            <button type="button" class="btn btn-primary" id="openReportModalBtn">
+                <i class="fa-solid fa-bullhorn"></i> Submit Scam Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Community Ethics & Non-Defamation Notice -->
+    <div class="community-notice-banner">
+        <div class="notice-icon">
+            <i class="fa-solid fa-shield-virus"></i>
+        </div>
+        <div class="notice-text">
+            <strong>Community Awareness Notice:</strong>
+            Submissions reflect reported observations by users and are shared for defensive education.
+            TrustGuard AI displays these reports neutrally without making formal legal or criminal accusations against specific individuals.
+            Submissions are screened before being approved for public listing.
+        </div>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div class="community-filter-bar">
+        <span class="filter-label"><i class="fa-solid fa-filter"></i> Category:</span>
+        <div class="filter-pills">
+            {% for cat in categories %}
+                <a
+                    href="{{ url_for('community_reports_page', category=cat if cat != 'All' else None) }}"
+                    class="filter-pill {% if (active_category == cat) or (active_category == 'all' and cat == 'All') or (not active_category and cat == 'All') %}active{% endif %}"
+                >
+                    {{ cat }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Approved Reports Feed -->
+    <div class="reports-feed">
+        {% if reports %}
+            <div class="reports-grid">
+                {% for r in reports %}
+                    <div class="report-card">
+                        <div class="report-header">
+                            <div class="report-meta">
+                                <span class="badge badge-type">{{ r.category }}</span>
+                                <span class="badge badge-outline">
+                                    {% if r.scam_type == 'url' %}
+                                        <i class="fa-solid fa-link"></i> URL
+                                    {% elif r.scam_type == 'email' %}
+                                        <i class="fa-solid fa-envelope"></i> Email
+                                    {% elif r.scam_type == 'job_offer' %}
+                                        <i class="fa-solid fa-briefcase"></i> Job Offer
+                                    {% elif r.scam_type == 'screenshot' %}
+                                        <i class="fa-solid fa-camera"></i> Screenshot
+                                    {% else %}
+                                        <i class="fa-solid fa-message"></i> Text
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="report-status-badge">
+                                <span class="badge badge-suspicious">
+                                    <i class="fa-solid fa-flag"></i> Reported as Suspicious
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Suspicious Evidence Snippet Box -->
+                        <div class="report-evidence-box">
+                            <span class="evidence-label"><i class="fa-solid fa-quote-left"></i> Reported Suspicious Content:</span>
+                            <div class="evidence-text">{{ r.evidence_snippet }}</div>
+                        </div>
+
+                        <!-- User's Observation Description -->
+                        <div class="report-desc-box">
+                            <span class="desc-label"><i class="fa-solid fa-circle-question"></i> Suspicious Hallmarks Observed:</span>
+                            <p class="desc-text">{{ r.description }}</p>
+                        </div>
+
+                        <!-- Heuristic Threat Indicators Tags -->
+                        {% if r.indicators_list %}
+                            <div class="report-indicators">
+                                <span class="indicators-title">Detected Threat Markers:</span>
+                                <div class="indicators-tags">
+                                    {% for ind in r.indicators_list %}
+                                        <span class="indicator-tag">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> {{ ind }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Footer Meta: Reporter & Date -->
+                        <div class="report-footer">
+                            <div class="report-author">
+                                <i class="fa-solid fa-user-shield"></i>
+                                <span>{{ r.author_label }}</span>
+                            </div>
+                            <div class="report-date text-muted text-xs">
+                                <i class="fa-regular fa-clock"></i>
+                                {{ r.created_at.strftime('%b %d, %Y') if r.created_at.strftime else r.created_at }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fa-solid fa-shield-cat"></i>
+                </div>
+                <h4>No Reports in this Category Yet</h4>
+                <p>No community reports matching this filter have been submitted and approved yet. Be the first to share a pattern!</p>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('openReportModalBtn').click();">
+                    <i class="fa-solid fa-bullhorn"></i> Submit a Scam Report
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Submit Scam Report -->
+<div id="reportModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-bullhorn"></i> Submit a Suspicious Scam Report</h3>
+                <button type="button" class="modal-close" id="closeReportModalBtn">&times;</button>
+            </div>
+            
+            <form id="communityReportForm" class="modal-form" onsubmit="return false;">
+                <div class="modal-body">
+                    <div class="alert alert-info text-xs" style="margin-bottom: 16px;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>
+                            To protect privacy and prevent public defamation, submissions are reviewed before publication.
+                            Describe communication characteristics neutrally without identifying private individuals.
+                        </span>
+                    </div>
+
+                    <div id="reportModalError" class="alert alert-danger" style="display: none; margin-bottom: 14px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span id="reportModalErrorMsg"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportCategory" class="form-label">Report Category <span class="text-danger">*</span></label>
+                        <select id="reportCategory" name="category" class="form-control" required>
+                            <option value="">-- Choose Category --</option>
+                            <option value="Phishing / SMS">Phishing / SMS Text Scam</option>
+                            <option value="Fake Job Offer">Fake Job / Internship Offer</option>
+                            <option value="Financial / Crypto Scam">Financial / Cryptocurrency Demands</option>
+                            <option value="Deceptive URL">Deceptive / Spoofed URL</option>
+                            <option value="Impersonation Scam">Authority / Brand Impersonation</option>
+                            <option value="Other">Other Suspicious Solicitation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportScamType" class="form-label">Modality Type</label>
+                        <select id="reportScamType" name="scam_type" class="form-control">
+                            <option value="text">Message / SMS</option>
+                            <option value="email">Email Communication</option>
+                            <option value="url">Website / URL</option>
+                            <option value="job_offer">Recruitment Offer</option>
+                            <option value="screenshot">Screenshot Evidence</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportEvidence" class="form-label">Suspicious Message, Snippet, or URL <span class="text-danger">*</span></label>
+                        <textarea
+                            id="reportEvidence"
+                            name="evidence_snippet"
+                            class="form-control"
+                            rows="4"
+                            placeholder="Paste the suspicious message text, email headers, or URL here..."
+                            required
+                        ></textarea>
+                        <span class="text-xs text-muted">Paste the exact suspicious communication text or URL (5 to 3,000 characters).</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportDescription" class="form-label">Why does this seem suspicious? <span class="text-danger">*</span></label>
+                        <textarea
+                            id="reportDescription"
+                            name="description"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Explain the red flags: e.g. artificial urgency, untraceable gift card request, mismatched domain..."
+                            required
+                        ></textarea>
+                        <span class="text-xs text-muted">Briefly explain what triggered your suspicion (minimum 10 characters).</span>
+                    </div>
+
+                    <div class="text-xs text-muted" style="margin-top: 8px;">
+                        {% if current_user %}
+                            <i class="fa-solid fa-user-check"></i> Submitting as verified user: <strong>{{ current_user.username }}</strong>
+                        {% else %}
+                            <i class="fa-solid fa-user-ninja"></i> Submitting as: <strong>Guest (Anonymous)</strong>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelReportModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitReportBtn">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Report for Moderation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/community.js') }}"></script>
+{% endblock %}

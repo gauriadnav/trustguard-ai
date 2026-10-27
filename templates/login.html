@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — TrustGuard AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="card auth-card">
+        <div class="auth-header text-center">
+            <div class="auth-shield">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2>Sign In to TrustGuard AI</h2>
+            <p class="text-muted">Access your personal scan history, saved threat logs, and dashboard metrics.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login', next=request.args.get('next')) if request.args.get('next') else url_for('login') }}" class="auth-form">
+            {% if request.args.get('next') %}
+                <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="identifier" class="form-label">Username or Email</label>
+                <div class="input-icon-group">
+                    <i class="fa-solid fa-user input-icon"></i>
+                    <input
+                        type="text"
+                        id="identifier"
+                        name="identifier"
+                        class="form-control"
+                        placeholder="Enter your username or email"
+                        value="{{ identifier or '' }}"
+                        required
+                        autofocus
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-icon-group">
+                    <i class="fa-solid fa-key input-icon"></i>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-control"
+                        placeholder="Enter your password"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="form-actions-full">
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+                </button>
+            </div>
+        </form>
+
+        <div class="auth-footer text-center">
+            <p>Don't have an account yet? <a href="{{ url_for('register') }}">Create an account</a></p>
+            <p class="text-xs text-muted mt-2">
+                <i class="fa-solid fa-shield-halved"></i> Guest scans can be performed from the homepage without signing in.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
