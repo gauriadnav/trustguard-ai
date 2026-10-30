@@ -41,7 +41,7 @@ app.config.from_object(Config)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=False,  # Set to True in production HTTPS
+    SESSION_COOKIE_SECURE=not Config.DEBUG,  # True in production (HTTPS); False in local dev (HTTP)
 )
 
 

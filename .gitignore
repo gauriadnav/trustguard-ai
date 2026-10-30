@@ -53,3 +53,13 @@ pyrefly.toml
 # to obtain it from the official UCI repository before training.
 # ml/model.pkl and ml/vectorizer.pkl are intentionally included (committed).
 ml/dataset.csv
+
+# ── Project report documents (binary build artefacts, not application code) ───
+# Word documents generated for the final-year project report are excluded.
+# They are large binary files that do not belong in the application repository.
+*.docx
+
+# ── Report generation assets (scripts and diagrams for the written report) ────
+# report_assets/ contains Python generation scripts and diagram images created
+# specifically for the project report. Not part of the deployable application.
+report_assets/
