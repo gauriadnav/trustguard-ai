@@ -26,7 +26,7 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from config import Config
-from db import execute_query, fetch_one, fetch_all, check_connection
+from db import execute_query, fetch_one, fetch_all, check_connection, init_db
 from scanner import analyze_content
 from ocr import extract_text_from_image, is_tesseract_available
 
@@ -43,6 +43,32 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=not Config.DEBUG,  # True in production (HTTPS); False in local dev (HTTP)
 )
+
+# ── Database initialization ───────────────────────────────────────────────────
+# Runs once per Gunicorn worker process at startup (module-level import).
+# Every operation is idempotent: CREATE TABLE IF NOT EXISTS, ALTER TABLE only
+# when the column is missing, INSERT only when the table is empty.
+# No credentials or connection strings are written to logs.
+with app.app_context():
+    try:
+        _init_ok, _init_msg = init_db()
+        if _init_ok:
+            logger.info("Database initialized: %s", _init_msg)
+        else:
+            logger.error(
+                "Database initialization reported failure. "
+                "Check DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, "
+                "and DB_SSL_CA environment variables."
+            )
+    except Exception as _init_exc:
+        # Log only the exception class — not the message, which may contain
+        # connection details such as host or username.
+        logger.error(
+            "Database initialization raised %s at startup. "
+            "Check DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, "
+            "and DB_SSL_CA environment variables.",
+            type(_init_exc).__name__,
+        )
 
 
 # -----------------------------------------------------------------------------
